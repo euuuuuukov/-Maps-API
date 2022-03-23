@@ -138,7 +138,7 @@ class Map(QMainWindow):
         return True
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_PageUp or event.key() == Qt.Key_Up:
+        if event.key() == Qt.Key_PageUp:
             if self.base_bool():
                 if float(self.input_scalex.text()) <= 0.015:
                     self.input_scalex.setText('0.005')
@@ -150,7 +150,7 @@ class Map(QMainWindow):
                     self.input_scaley.setText(str(float(self.input_scaley.text()) - 0.01))
                 self.txt_error.setText('')
                 self.show_map()
-        elif event.key() == Qt.Key_PageDown or event.key() == Qt.Key_Down:
+        elif event.key() == Qt.Key_PageDown:
             if self.base_bool():
                 if float(self.input_scalex.text()) >= 89.99:
                     self.input_scalex.setText('90.000')
