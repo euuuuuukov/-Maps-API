@@ -3,7 +3,7 @@ import os
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QFont, QPainter, QColor
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton, QSlider
 
 
 def is__float_number(n):
@@ -23,6 +23,7 @@ class Map(QMainWindow):
     def initUI(self):
         self.setFixedSize(1020, 450)
         self.setWindowTitle('Большая задача по Maps API')
+        self.map_type = 'map'
 
         self.input_coordx = QLineEdit(self)
         self.input_coordx.move(210, 0)
@@ -93,15 +94,40 @@ class Map(QMainWindow):
         self.txt_error.move(110, 150)
         self.txt_error.setFont(QFont('Italic', 8, QFont.Bold))
 
+        self.slider = QSlider(Qt.Horizontal, self)
+        self.slider.resize(360, 25)
+        self.slider.move(0, 185)
+        self.slider.setTickPosition(QSlider.TicksBelow)
+        self.slider.setTickInterval(50)
+        self.slider.valueChanged.connect(self.change_map_type)
+
+        self.slider_txt = QLabel('схема\t\t\t       гибрид\t\t          спутник', self)
+        self.slider_txt.resize(360, 15)
+        self.slider_txt.move(0, 215)
+
         self.map = QLabel(self)
         self.map.move(370, 0)
         self.map.resize(650, 450)
+
+    def change_map_type(self, value):
+        if value < 34:
+            self.map_type = 'map'
+            self.slider.setValue(0)
+        elif value > 66:
+            self.map_type = 'sat'
+            self.slider.setValue(100)
+        else:
+            self.map_type = 'sat,skl'
+            self.slider.setValue(50)
+        if self.base_bool():
+            self.show_map()
 
     def paintEvent(self, event):
         painter = QPainter()
         painter.begin(self)
         painter.setBrush(QColor(0, 0, 0))
         painter.drawLine(369, 0, 369, 450)
+        painter.drawLine(0, 182, 369, 182)
         painter.end()
 
     def show_map(self):
@@ -111,7 +137,8 @@ class Map(QMainWindow):
                               self.input_scaley.text())
 
     def from_request(self, x, y, dx, dy):
-        self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&l=map')
+        self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
+                                     f'l={self.map_type}')
         with open('map.png', 'wb') as f:
             f.write(self.response.content)
         self.pixmap = QPixmap('map.png')
@@ -160,11 +187,6 @@ class Map(QMainWindow):
                     self.input_scaley.setText(str(float(self.input_scaley.text()) + 0.01))
                 self.txt_error.setText('')
                 self.show_map()
-        elif event.key() == Qt.Key_Left:
-            if self.base_bool():
-                if float(self.input_coordx.text()) - float(self.input_scalex.text()) >= -175:
-                    self.input_coordx.setText(str(float(self.input_coordx.text()) - float(self.input_scalex.text())))
-                    self.show_map()
 
 
 if __name__ == '__main__':
