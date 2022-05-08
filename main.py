@@ -129,6 +129,22 @@ class Map(QMainWindow):
         self.search_txt_error.move(0, 295)
         self.search_txt_error.setFont(QFont('Italic', 8, QFont.Bold))
 
+        self.reset_btn = QPushButton('Сброс поискового результата', self)
+        self.reset_btn.resize(200, 30)
+        self.reset_btn.move(90, 310)
+        self.reset_btn.clicked.connect(self.reset)
+
+    def reset(self):
+        self.search_txt_error.setText('')
+        self.map.setPixmap(QPixmap('no_map.jpg'))
+        self.txt_error.setText('')
+        self.search_input.setPlainText('')
+        self.input_coordx.setText('')
+        self.input_coordy.setText('')
+        self.input_scalex.setText('')
+        self.input_scaley.setText('')
+        self.set_pt = False
+
     def search(self):
         try:
             self.set_pt = True
@@ -184,8 +200,7 @@ class Map(QMainWindow):
                                              f'&spn={self.dx},{self.dy}&size=650,450&l={self.map_type}')
             with open('map.png', 'wb') as f:
                 f.write(self.response.content)
-            self.pixmap = QPixmap('map.png')
-            self.map.setPixmap(self.pixmap)
+            self.map.setPixmap(QPixmap('map.png'))
             os.remove('map.png')
 
     def base_bool(self):
