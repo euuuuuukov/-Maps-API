@@ -24,6 +24,7 @@ class Map(QMainWindow):
         self.setFixedSize(1020, 450)
         self.setWindowTitle('Большая задача по Maps API')
         self.map_type = 'map'
+        self.set_pt = False
 
         self.input_coordx = QLineEdit(self)
         self.input_coordx.move(210, 0)
@@ -123,6 +124,7 @@ class Map(QMainWindow):
         self.search_btn.clicked.connect(self.search)
 
     def search(self):
+        self.set_pt = True
         self.input_coordx.setText('')
         self.input_coordy.setText('')
         self.input_scalex.setText('')
@@ -172,8 +174,12 @@ class Map(QMainWindow):
                               self.input_scaley.text())
 
     def from_request(self, x, y, dx, dy):
-        self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
-                                     f'l={self.map_type}')
+        if self.set_pt:
+            self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
+                                         f'l={self.map_type}&pt={x},{y}')
+        else:
+            self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
+                                         f'l={self.map_type}')
         with open('map.png', 'wb') as f:
             f.write(self.response.content)
         self.pixmap = QPixmap('map.png')
