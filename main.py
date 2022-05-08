@@ -25,6 +25,7 @@ class Map(QMainWindow):
         self.setWindowTitle('Большая задача по Maps API')
         self.map_type = 'map'
         self.set_pt = False
+        self.x, self.y, self.dx, self.dy = 200, 200, 200, 200
 
         self.input_coordx = QLineEdit(self)
         self.input_coordx.move(210, 0)
@@ -125,10 +126,6 @@ class Map(QMainWindow):
 
     def search(self):
         self.set_pt = True
-        self.input_coordx.setText('')
-        self.input_coordy.setText('')
-        self.input_scalex.setText('')
-        self.input_scaley.setText('')
         r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
                          f'geocode={self.search_input.text()}&format=json').json()
         x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split())
@@ -137,13 +134,8 @@ class Map(QMainWindow):
         self.input_scalex.setText('0.1')
         self.input_scaley.setText('0.1')
         self.txt_error.setText('')
-        self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn=0.1,0.1&size=650,450&'
-                                     f'l={self.map_type}&pt={x},{y}')
-        with open('map.png', 'wb') as f:
-            f.write(self.response.content)
-        self.pixmap = QPixmap('map.png')
-        self.map.setPixmap(self.pixmap)
-        os.remove('map.png')
+        self.x, self.y = x, y
+        self.show_map()
 
     def change_map_type(self, value):
         if value < 34:
@@ -170,35 +162,33 @@ class Map(QMainWindow):
     def show_map(self):
         if self.base_bool():
             self.txt_error.setText('')
-            self.from_request(self.input_coordx.text(), self.input_coordy.text(), self.input_scalex.text(),
-                              self.input_scaley.text())
-
-    def from_request(self, x, y, dx, dy):
-        if self.set_pt:
-            self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
-                                         f'l={self.map_type}&pt={x},{y}')
-        else:
-            self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn={dx},{dy}&size=650,450&'
-                                         f'l={self.map_type}')
-        with open('map.png', 'wb') as f:
-            f.write(self.response.content)
-        self.pixmap = QPixmap('map.png')
-        self.map.setPixmap(self.pixmap)
-        os.remove('map.png')
+            if not (self.x == self.input_coordx.text() and self.y == self.input_coordy.text()):
+                self.set_pt = False
+            self.x, self.y, self.dx, self.dy = self.input_coordx.text(), self.input_coordy.text(), \
+                                               self.input_scalex.text(), self.input_scaley.text()
+            if self.set_pt:
+                self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={self.x},{self.y}&spn='
+                                             f'{self.dx},{self.dy}&size=650,450&l={self.map_type}&pt={self.x},{self.y}')
+            else:
+                self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={self.x},{self.y}'
+                                             f'&spn={self.dx},{self.dy}&size=650,450&l={self.map_type}')
+            with open('map.png', 'wb') as f:
+                f.write(self.response.content)
+            self.pixmap = QPixmap('map.png')
+            self.map.setPixmap(self.pixmap)
+            os.remove('map.png')
 
     def base_bool(self):
-        if self.input_coordx.text() == '' or self.input_coordy.text() == '' or self.input_scalex.text() == '' or\
-                self.input_scaley.text() == '':
+        x, y, dx, dy = self.input_coordx.text(), self.input_coordy.text(), self.input_scalex.text(), \
+                       self.input_scaley.text()
+        if x == '' or y == '' or dx == '' or dy == '':
             self.txt_error.setText('Заполните все поля!')
             return False
-        elif not is__float_number(self.input_coordx.text()) or not is__float_number(self.input_coordy.text()) or\
-                not is__float_number(self.input_scalex.text()) or not is__float_number(self.input_scaley.text()):
+        elif not is__float_number(x) or not is__float_number(y) or not is__float_number(dx) or not is__float_number(dy):
             self.txt_error.setText('Значения должны быть числами!')
             return False
-        elif not (float(self.input_coordx.text()) >= -175 and float(self.input_coordx.text()) <= 175) or\
-                not (float(self.input_coordy.text()) >= -85 and float(self.input_coordy.text()) <= 85) or\
-                not (float(self.input_scalex.text()) >= 0.005 and float(self.input_scalex.text()) <= 90) or\
-                not (float(self.input_scaley.text()) >= 0.005 and float(self.input_scaley.text()) <= 90):
+        elif not (float(x) >= -175 and float(x) <= 175) or not (float(y) >= -85 and float(y) <= 85) or \
+                not (float(dx) >= 0.005 and float(dx) <= 90) or not (float(dy) >= 0.005 and float(dy) <= 90):
             self.txt_error.setText('Не все значения находятся\nв указанном диапазоне!')
             return False
         return True
