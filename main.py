@@ -3,7 +3,7 @@ import os
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QFont, QPainter, QColor
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton, QSlider
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton, QSlider, QPlainTextEdit
 
 
 def is__float_number(n):
@@ -115,7 +115,7 @@ class Map(QMainWindow):
         self.search_txt.resize(140, 30)
         self.search_txt.move(0, 235)
 
-        self.search_input = QLineEdit(self)
+        self.search_input = QPlainTextEdit(self)
         self.search_input.resize(210, 60)
         self.search_input.move(150, 235)
 
@@ -124,18 +124,27 @@ class Map(QMainWindow):
         self.search_btn.move(0, 265)
         self.search_btn.clicked.connect(self.search)
 
+        self.search_txt_error = QLabel(self)
+        self.search_txt_error.resize(360, 15)
+        self.search_txt_error.move(0, 295)
+        self.search_txt_error.setFont(QFont('Italic', 8, QFont.Bold))
+
     def search(self):
-        self.set_pt = True
-        r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
-                         f'geocode={self.search_input.text()}&format=json').json()
-        x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split())
-        self.input_coordx.setText(x)
-        self.input_coordy.setText(y)
-        self.input_scalex.setText('0.1')
-        self.input_scaley.setText('0.1')
-        self.txt_error.setText('')
-        self.x, self.y = x, y
-        self.show_map()
+        try:
+            self.set_pt = True
+            r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
+                             f'geocode={self.search_input.toPlainText()}&format=json').json()
+            x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split())
+            self.input_coordx.setText(x)
+            self.input_coordy.setText(y)
+            self.input_scalex.setText('0.1')
+            self.input_scaley.setText('0.1')
+            self.txt_error.setText('')
+            self.x, self.y = x, y
+            self.show_map()
+            self.search_txt_error.setText('')
+        except:
+            self.search_txt_error.setText('Проверьте правильность введенных данных!')
 
     def change_map_type(self, value):
         if value < 34:
@@ -161,6 +170,7 @@ class Map(QMainWindow):
 
     def show_map(self):
         if self.base_bool():
+            self.search_txt_error.setText('')
             self.txt_error.setText('')
             if not (self.x == self.input_coordx.text() and self.y == self.input_coordy.text()):
                 self.set_pt = False
