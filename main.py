@@ -129,7 +129,7 @@ class Map(QMainWindow):
         self.input_scaley.setText('')
         r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
                          f'geocode={self.search_input.text()}&format=json').json()
-        x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'])
+        x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split())
         self.input_coordx.setText(x)
         self.input_coordy.setText(y)
         self.input_scalex.setText('0.1')
