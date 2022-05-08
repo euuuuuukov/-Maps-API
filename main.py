@@ -95,19 +95,53 @@ class Map(QMainWindow):
         self.txt_error.setFont(QFont('Italic', 8, QFont.Bold))
 
         self.slider = QSlider(Qt.Horizontal, self)
-        self.slider.resize(360, 25)
-        self.slider.move(0, 185)
+        self.slider.resize(355, 25)
+        self.slider.move(5, 185)
         self.slider.setTickPosition(QSlider.TicksBelow)
         self.slider.setTickInterval(50)
         self.slider.valueChanged.connect(self.change_map_type)
 
-        self.slider_txt = QLabel('схема\t\t\t       гибрид\t\t          спутник', self)
+        self.slider_txt = QLabel(' схема\t\t\t       гибрид\t\t          спутник', self)
         self.slider_txt.resize(360, 15)
         self.slider_txt.move(0, 215)
 
         self.map = QLabel(self)
         self.map.move(370, 0)
         self.map.resize(650, 450)
+
+        self.search_txt = QLabel(' Или просто введите\n адрес и нажмите "Искать"', self)
+        self.search_txt.resize(140, 30)
+        self.search_txt.move(0, 235)
+
+        self.search_input = QLineEdit(self)
+        self.search_input.resize(210, 60)
+        self.search_input.move(150, 235)
+
+        self.search_btn = QPushButton('Искать', self)
+        self.search_btn.resize(140, 30)
+        self.search_btn.move(0, 265)
+        self.search_btn.clicked.connect(self.search)
+
+    def search(self):
+        self.input_coordx.setText('')
+        self.input_coordy.setText('')
+        self.input_scalex.setText('')
+        self.input_scaley.setText('')
+        r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
+                         f'geocode={self.search_input.text()}&format=json').json()
+        x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'])
+        self.input_coordx.setText(x)
+        self.input_coordy.setText(y)
+        self.input_scalex.setText('0.1')
+        self.input_scaley.setText('0.1')
+        self.txt_error.setText('')
+        self.response = requests.get(f'https://static-maps.yandex.ru/1.x/?ll={x},{y}&spn=0.1,0.1&size=650,450&'
+                                     f'l={self.map_type}&pt={x},{y}')
+        with open('map.png', 'wb') as f:
+            f.write(self.response.content)
+        self.pixmap = QPixmap('map.png')
+        self.map.setPixmap(self.pixmap)
+        os.remove('map.png')
 
     def change_map_type(self, value):
         if value < 34:
@@ -128,6 +162,7 @@ class Map(QMainWindow):
         painter.setBrush(QColor(0, 0, 0))
         painter.drawLine(369, 0, 369, 450)
         painter.drawLine(0, 182, 369, 182)
+        painter.drawLine(0, 232, 369, 232)
         painter.end()
 
     def show_map(self):
