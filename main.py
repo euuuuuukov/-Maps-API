@@ -134,10 +134,20 @@ class Map(QMainWindow):
         self.reset_btn.move(90, 310)
         self.reset_btn.clicked.connect(self.reset)
 
+        self.txt_all_address = QLabel(' Полный адрес\n найденного объекта:', self)
+        self.txt_all_address.resize(115, 35)
+        self.txt_all_address.move(0, 345)
+
+        self.all_address = QPlainTextEdit(self)
+        self.all_address.resize(240, 35)
+        self.all_address.move(120, 345)
+        self.all_address.setReadOnly(True)
+
     def reset(self):
         self.search_txt_error.setText('')
         self.map.setPixmap(QPixmap('no_map.jpg'))
         self.txt_error.setText('')
+        self.all_address.setPlainText('')
         self.search_input.setPlainText('')
         self.input_coordx.setText('')
         self.input_coordy.setText('')
@@ -150,7 +160,9 @@ class Map(QMainWindow):
             self.set_pt = True
             r = requests.get(f'http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&'
                              f'geocode={self.search_input.toPlainText()}&format=json').json()
-            x, y = map(str, r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['Point']['pos'].split())
+            r = r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']
+            x, y = map(str, r['Point']['pos'].split())
+            self.all_address.setPlainText(r['metaDataProperty']['GeocoderMetaData']['text'])
             self.input_coordx.setText(x)
             self.input_coordy.setText(y)
             self.input_scalex.setText('0.1')
@@ -182,6 +194,8 @@ class Map(QMainWindow):
         painter.drawLine(369, 0, 369, 450)
         painter.drawLine(0, 182, 369, 182)
         painter.drawLine(0, 232, 369, 232)
+        for i in range(0, 369, 3):
+            painter.drawLine(i, 342, i + 1, 342)
         painter.end()
 
     def show_map(self):
