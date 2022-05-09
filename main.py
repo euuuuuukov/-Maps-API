@@ -3,7 +3,7 @@ import os
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QFont, QPainter, QColor
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton, QSlider, QPlainTextEdit
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QLineEdit, QPushButton, QSlider, QPlainTextEdit, QCheckBox
 
 
 def is__float_number(n):
@@ -25,6 +25,7 @@ class Map(QMainWindow):
         self.setWindowTitle('Большая задача по Maps API')
         self.map_type = 'map'
         self.set_pt = False
+        self.add_index = False
         self.x, self.y, self.dx, self.dy = 200, 200, 200, 200
 
         self.input_coordx = QLineEdit(self)
@@ -35,8 +36,9 @@ class Map(QMainWindow):
         self.txt_coordx1.resize(210, 15)
         self.txt_coordx1.setFont(QFont('Italic', 10))
 
-        self.txt_coordx2 = QLabel('\n (диапазон изменения - от -175 до 175)', self)
-        self.txt_coordx2.resize(210, 30)
+        self.txt_coordx2 = QLabel(' (диапазон изменения - от -175 до 175)', self)
+        self.txt_coordx2.resize(210, 15)
+        self.txt_coordx2.move(0, 15)
         self.txt_coordx2.setFont(QFont('Italic', 8, QFont.Cursive))
 
         self.input_coordy = QLineEdit(self)
@@ -46,11 +48,10 @@ class Map(QMainWindow):
         self.txt_coordy1 = QLabel(' Введите широту:', self)
         self.txt_coordy1.resize(210, 15)
         self.txt_coordy1.move(0, 35)
-        self.txt_coordy1.setFont(QFont('Italic', 10))
 
-        self.txt_coordy2 = QLabel('\n (диапазон изменения - от -85 до 85)', self)
-        self.txt_coordy2.resize(210, 30)
-        self.txt_coordy2.move(0, 35)
+        self.txt_coordy2 = QLabel(' (диапазон изменения - от -85 до 85)', self)
+        self.txt_coordy2.resize(210, 15)
+        self.txt_coordy2.move(0, 50)
         self.txt_coordy2.setFont(QFont('Italic', 8, QFont.Cursive))
 
         self.input_scalex = QLineEdit(self)
@@ -62,9 +63,9 @@ class Map(QMainWindow):
         self.txt_scalex1.move(0, 70)
         self.txt_scalex1.setFont(QFont('Italic', 10))
 
-        self.txt_scalex2 = QLabel('\n (диапазон изменения - от 0.005 до 90)', self)
-        self.txt_scalex2.resize(210, 30)
-        self.txt_scalex2.move(0, 70)
+        self.txt_scalex2 = QLabel(' (диапазон изменения - от 0.005 до 90)', self)
+        self.txt_scalex2.resize(210, 15)
+        self.txt_scalex2.move(0, 85)
         self.txt_scalex2.setFont(QFont('Italic', 8, QFont.Cursive))
 
         self.input_scaley = QLineEdit(self)
@@ -76,9 +77,9 @@ class Map(QMainWindow):
         self.txt_scaley1.move(0, 105)
         self.txt_scaley1.setFont(QFont('Italic', 10))
 
-        self.txt_scaley2 = QLabel('\n (диапазон изменения - от 0.005 до 90)', self)
-        self.txt_scaley2.resize(210, 30)
-        self.txt_scaley2.move(0, 105)
+        self.txt_scaley2 = QLabel(' (диапазон изменения - от 0.005 до 90)', self)
+        self.txt_scaley2.resize(210, 15)
+        self.txt_scaley2.move(0, 120)
         self.txt_scaley2.setFont(QFont('Italic', 8, QFont.Cursive))
 
         self.txt_point = QLabel('  Разделитель - точка!', self)
@@ -143,6 +144,19 @@ class Map(QMainWindow):
         self.all_address.move(120, 345)
         self.all_address.setReadOnly(True)
 
+        self.index_check = QCheckBox('Добавить почтовый индекс к полному адресу', self)
+        self.index_check.resize(360, 30)
+        self.index_check.move(0, 380)
+        self.index_check.clicked.connect(self.index_switch)
+
+    def index_switch(self):
+        if self.index_check.isChecked():
+            self.add_index = True
+        else:
+            self.add_index = False
+        if self.all_address.toPlainText() != '':
+            self.search()
+
     def reset(self):
         self.search_txt_error.setText('')
         self.map.setPixmap(QPixmap('no_map.jpg'))
@@ -154,6 +168,8 @@ class Map(QMainWindow):
         self.input_scalex.setText('')
         self.input_scaley.setText('')
         self.set_pt = False
+        self.add_index = False
+        self.index_check.setChecked(False)
 
     def search(self):
         try:
@@ -162,7 +178,11 @@ class Map(QMainWindow):
                              f'geocode={self.search_input.toPlainText()}&format=json').json()
             r = r['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']
             x, y = map(str, r['Point']['pos'].split())
-            self.all_address.setPlainText(r['metaDataProperty']['GeocoderMetaData']['text'])
+            r = r['metaDataProperty']['GeocoderMetaData']
+            if self.add_index:
+                self.all_address.setPlainText(f'{r["Address"]["postal_code"]}, {r["text"]}')
+            else:
+                self.all_address.setPlainText(r["text"])
             self.input_coordx.setText(x)
             self.input_coordy.setText(y)
             self.input_scalex.setText('0.1')
